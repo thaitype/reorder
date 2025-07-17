@@ -1,6 +1,6 @@
 # reorder
 
-[![CI](https://github.com/thaitype/reorder/actions/workflows/main.yml/badge.svg)](https://github.com/thaitype/reorder/actions/workflows/main.yml) [![codecov](https://codecov.io/gh/thaitype/reorder/graph/badge.svg?token=B7MCHM57BH)](https://codecov.io/gh/thaitype/reorder) [![NPM Version](https://img.shields.io/npm/v/reorder) ](https://www.npmjs.com/package/reorder)[![npm downloads](https://img.shields.io/npm/dt/reorder)](https://www.npmjs.com/reorder) 
+[![CI](https://github.com/thaitype/reorder/actions/workflows/main.yml/badge.svg)](https://github.com/thaitype/reorder/actions/workflows/main.yml) [![codecov](https://codecov.io/gh/thaitype/reorder/graph/badge.svg?token=B7MCHM57BH)](https://codecov.io/gh/thaitype/reorder) [![NPM Version](https://img.shields.io/npm/v/@thaitype/reorder) ](https://www.npmjs.com/package/@thaitype/reorder)[![npm downloads](https://img.shields.io/npm/dt/@thaitype/reorder)](https://www.npmjs.com/@thaitype/reorder) 
 
 ## Reorder Function — Design Specification
 
