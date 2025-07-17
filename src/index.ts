@@ -4,4 +4,4 @@
  * Export all the functions from the library
  */
 
-export * from './lib.js';
+export * from './reorder.js';
