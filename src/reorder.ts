@@ -19,17 +19,13 @@ const MIN_ORDER_VALUE = 1;
 
 /**
  * Pure function to reorder items by moving one item to a new position
- * 
+ *
  * @param items - Array of items with { id, order? } structure (may be unsorted)
  * @param moveId - ID of the item to move
  * @param targetIndex - Target position in the sorted array (0 = first)
  * @returns Object with changes needed for DB and full ordered items array
  */
-export function reorderItems(
-  items: OrderableItem[],
-  moveId: string,
-  targetIndex: number
-): ReorderResult {
+export function reorderItems(items: OrderableItem[], moveId: string, targetIndex: number): ReorderResult {
   // Validate inputs
   if (!items || items.length === 0) {
     throw new Error('Items array cannot be empty');
@@ -77,7 +73,7 @@ export function reorderItems(
     // Renumber all items with even gaps
     const renumberedItems = renumberAllItems(newSortedItems);
     finalOrderedItems = renumberedItems;
-    
+
     // All items with order fields need updating
     changes = renumberedItems
       .filter(item => item.order !== undefined)
@@ -140,7 +136,6 @@ function needsRenumbering(items: OrderableItem[], targetIndex: number, newOrder:
     return true;
   }
 
-
   // Check if the new order would be too close to neighbors
   // Get the sorted items without the moved item to determine proper neighbors
   const sortedItemsWithoutMoved = [...items]
@@ -169,9 +164,7 @@ function needsRenumbering(items: OrderableItem[], targetIndex: number, newOrder:
  * Check if the items array contains invalid order values
  */
 function hasInvalidOrderValues(items: OrderableItem[]): boolean {
-  const ordersWithValues = items
-    .filter(item => item.order !== undefined)
-    .map(item => item.order!);
+  const ordersWithValues = items.filter(item => item.order !== undefined).map(item => item.order!);
 
   // Check for order values that are zero or negative (truly invalid)
   if (ordersWithValues.some(order => order <= 0)) {
