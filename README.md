@@ -1,67 +1,34 @@
-# reorder
+# @thaitype/reorder
+
 
 [![CI](https://github.com/thaitype/reorder/actions/workflows/main.yml/badge.svg)](https://github.com/thaitype/reorder/actions/workflows/main.yml) [![codecov](https://codecov.io/gh/thaitype/reorder/graph/badge.svg?token=B7MCHM57BH)](https://codecov.io/gh/thaitype/reorder) [![NPM Version](https://img.shields.io/npm/v/@thaitype/reorder) ](https://www.npmjs.com/package/@thaitype/reorder)[![npm downloads](https://img.shields.io/npm/dt/@thaitype/reorder)](https://www.npmjs.com/@thaitype/reorder) 
 
-## Reorder Function — Design Specification
 
-### Purpose
+> Pure reorder function for consistent and testable item ordering based on the `order` field.
 
-Create a **pure function** (class or standalone) that computes the correct `"order"` field for a list of items when one is moved to a new position, without any DB or UI dependencies. This supports chapters, lessons, or sublessons—all using the `{ id, order? }` structure.
+## ✨ Features
 
----
+- ⚙️ **Pure function** – works without DB or side effects.
+- 🧪 **100% unit-testable** – ideal for CI pipelines and logic isolation.
+- 📐 **Order-aware** – operates strictly on the `order` field, not array position.
+- 🔄 **Auto-renumbering** – handles tight gaps and invalid values intelligently.
+- ✅ **Robust edge case handling** – including missing/duplicate/invalid orders.
 
-### Key Principles
+## 📦 Installation
 
-* **Pure logic:** No database, no side effects.
-* **Unit-testable:** Supports table-driven tests.
-* **Order field is primary:** All computations are based on the `"order"` field, not array index.
-* **Sorted context:** The `targetIndex` always refers to the position in the **sorted** order of items (ascending by `"order"`).
+```bash
+npm install @thaitype/reorder
+# or
+pnpm add @thaitype/reorder
+````
 
----
+## 🧠 Use Case
 
-### Input
+Designed for reordering structures like **chapters**, **lessons**, or **sublessons** where the data model includes an `{ id, order? }` field.
 
-* **items:** `OrderableItem[]`
-  Array of items (`{ id: string, order?: number }`). Input may be unsorted.
-* **moveId:** `string`
-  The `id` of the item to move.
-* **targetIndex:** `number`
-  The intended index **in the sorted list** (0 = first).
+## 🔧 API
 
----
-
-### Algorithm
-
-1. **Sort items** by `"order"` ascending (undefined orders are handled explicitly—either last or first, as documented).
-2. **Remove** the item with `moveId` from its position.
-3. **Insert** the item at `targetIndex` in the sorted array.
-4. **Compute new `"order"`:**
-
-   * If both neighbors exist: use the midpoint between their `"order"` values.
-   * If only previous: previous `"order"` + 1.
-   * If only next: next `"order"` - 1.
-   * If list is empty: assign 1.
-5. **Detect tight gaps:**
-   If order values become too close due to repeated insertions, renumber all orders with even gaps (e.g., 10, 20, 30, ...).
-6. **Determine changes:**
-   Only return items whose `"order"` field actually needs updating.
-
----
-
-### Output
-
-* **changes:**
-  `Array<{ id: string, order: number }>`
-  Minimal set of changes for DB persistence.
-* **orderedItems:**
-  `OrderableItem[]`
-  The full array of items, sorted by their new `"order"` (for UI/state reference).
-
----
-
-### Function Signature (TypeScript)
-
-```typescript
+```ts
 function reorderItems(
   items: OrderableItem[],
   moveId: string,
@@ -72,53 +39,98 @@ function reorderItems(
 }
 ```
 
----
+### Types
 
-### Edge Case Handling
+```ts
+export interface OrderableItem {
+  id: string;
+  order?: number;
+}
+```
 
-* Handles missing, undefined, or duplicate `"order"` fields (with documented behavior).
-* Moving to start or end of list.
-* Handles input arrays that are not initially sorted.
-* Throws error or returns no-op if `moveId` not found.
+## 📊 Algorithm Overview
 
----
+1. Sort `items` by `order` ascending.
+2. Remove the `moveId` item.
+3. Insert it at `targetIndex` in the sorted array.
+4. Recompute its `order`:
 
-### Example
+   * Between neighbors → use midpoint
+   * Before first → next - 1
+   * After last → previous + 1
+   * Only item → assign 1
+5. If new order too close → renumber all with step gaps (e.g. 10, 20, 30…).
+6. Return:
 
-**Input:**
+   * `changes[]` for DB update
+   * `orderedItems[]` for UI reference
 
-```js
-[
+## 🧪 Example
+
+```ts
+const items = [
   { id: 'A', order: 700 },
   { id: 'B', order: 200 },
   { id: 'C', order: 300 },
   { id: 'D', order: 100 },
   { id: 'E', order: 400 }
-]
+];
+
+const result = reorderItems(items, 'A', 1);
 ```
-
-Move `'X'` to `targetIndex: 1`.
-
-**After sorting:**
-`[100, 200, 300, 400, 700]` → Insert X at index 1 (`order = 150`).
 
 **Output:**
 
-```js
+```ts
 {
-  changes: [{ id: 'X', order: 150 }],
+  changes: [{ id: 'A', order: 150 }],
   orderedItems: [
     { id: 'D', order: 100 },
-    { id: 'X', order: 150 },
+    { id: 'A', order: 150 },
     { id: 'B', order: 200 },
     { id: 'C', order: 300 },
-    { id: 'E', order: 400 },
-    { id: 'A', order: 700 }
+    { id: 'E', order: 400 }
   ]
 }
 ```
 
----
+## 🧼 Edge Case Support
 
-**Summary:**
-The function operates only on the sorted `"order"` field, returns both the necessary DB updates and the full new ordering, and is designed for robust testability and extension.
+* ✅ Unsorted input
+* ✅ Missing or `undefined` orders
+* ✅ Duplicate or zero orders
+* ✅ Insert at start, middle, end
+* ✅ Auto-renumber when necessary
+
+## 🧪 Tests
+
+Run test suite with coverage:
+
+```bash
+pnpm test
+pnpm test:coverage
+```
+
+## 📁 Exports
+
+* `reorderItems()` — main reorder function
+* `sortItemsByOrder()` — utility function to sort items
+
+## 🧑‍💻 Development
+
+```bash
+pnpm install
+pnpm build
+pnpm test
+```
+
+To release:
+
+```bash
+pnpm release
+```
+
+## 📄 License
+
+MIT © [Thada Wangthammang](https://github.com/thadaw)
+
