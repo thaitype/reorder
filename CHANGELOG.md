@@ -1,5 +1,11 @@
 # reorder
 
+## 0.1.0
+
+### Minor Changes
+
+- c8adf7e: Update docs
+
 ## 0.3.0
 
 ### Minor Changes
