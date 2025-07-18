@@ -1,5 +1,11 @@
 # reorder
 
+## 0.2.0
+
+### Minor Changes
+
+- 9bcf469: Add Example
+
 ## 0.1.0
 
 ### Minor Changes
