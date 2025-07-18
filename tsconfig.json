@@ -26,8 +26,7 @@
     // absolute imports
     "baseUrl": ".",
     "paths": {
-      "reorder": ["src/index.ts"],
-      "reorder/adapters/zod": ["src/adapters/zod.ts"],
+      "@thaitype/reorder": ["src/index.ts"],
     }
   },
    "exclude": [
