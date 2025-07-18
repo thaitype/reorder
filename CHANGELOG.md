@@ -1,5 +1,11 @@
 # reorder
 
+## 0.3.0
+
+### Minor Changes
+
+- d9fa901: Add options for config reorder
+
 ## 0.2.0
 
 ### Minor Changes
