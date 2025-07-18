@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { reorderItems, sortItemsByOrder, type OrderableItem } from '../src';
 
+
 describe('reorderItems() - Pure Function', () => {
   describe('Basic Reordering', () => {
     it('should move item to middle position with midpoint calculation', () => {
@@ -520,18 +521,157 @@ describe('Complex Scenarios', () => {
 
   it('should ensure orders never equal 0', () => {
     const items: OrderableItem[] = [
-      { id: 'A', order: 0.5 },
+      { id: 'A', order: 0.5 }, // Invalid: below minimum value of 1
       { id: 'B', order: 1.0 },
     ];
 
     const result = reorderItems(items, 'B', 0);
 
-    // Should NOT trigger renumbering since order would be exactly 1 (valid)
+    // Should trigger renumbering since A has order 0.5 (below minimum of 1)
     expect(result.changes).toEqual([
-      { id: 'B', order: 1 }, // Max(1, 0.5 - 1) = 1 (minimum order value)
+      { id: 'B', order: 10 }, // Renumbered: first position
+      { id: 'A', order: 20 }, // Renumbered: second position
     ]);
 
-    // Verify no order is 0
-    expect(result.orderedItems.every(item => item.order! > 0)).toBe(true);
+    // Verify no order is below minimum value
+    expect(result.orderedItems.every(item => item.order! >= 1)).toBe(true);
+    
+    // Verify final order
+    expect(result.orderedItems).toEqual([
+      { id: 'B', order: 10 },
+      { id: 'A', order: 20 },
+    ]);
+  });
+});
+
+describe('Configurable Options', () => {
+  describe('Custom minOrderValue', () => {
+    it('should use custom minimum order value', () => {
+      const items: OrderableItem[] = [
+        { id: 'A', order: 50 },
+        { id: 'B', order: 100 },
+      ];
+
+      const result = reorderItems(items, 'B', 0, { minOrderValue: 10 });
+
+      // B should be placed at max(10, 50-1) = 49
+      expect(result.changes).toEqual([
+        { id: 'B', order: 49 },
+      ]);
+    });
+
+    it('should enforce custom minimum order value', () => {
+      const items: OrderableItem[] = [
+        { id: 'A', order: 5 }, // Below custom minimum of 10
+        { id: 'B', order: 15 },
+      ];
+
+      const result = reorderItems(items, 'B', 0, { 
+        minOrderValue: 10,
+        renumberGap: 5 
+      });
+
+      // Should trigger renumbering because A has order 5 < 10
+      expect(result.changes).toEqual([
+        { id: 'B', order: 5 },  // First position: 1 * 5
+        { id: 'A', order: 10 }, // Second position: 2 * 5
+      ]);
+    });
+  });
+
+  describe('Custom renumberGap', () => {
+    it('should use custom renumber gap when renumbering', () => {
+      const items: OrderableItem[] = [
+        { id: 'A', order: 0 }, // Invalid - triggers renumbering
+        { id: 'B', order: 1 },
+        { id: 'C', order: 2 },
+      ];
+
+      const result = reorderItems(items, 'A', 2, { renumberGap: 50 });
+
+      // Should renumber with gap of 50: 50, 100, 150
+      expect(result.changes).toEqual([
+        { id: 'B', order: 50 },
+        { id: 'C', order: 100 },
+        { id: 'A', order: 150 },
+      ]);
+    });
+  });
+
+  describe('Custom minOrderGap', () => {
+    it('should use custom minimum gap for tight spacing detection', () => {
+      // Create items where inserting between them would create tight spacing
+      const items: OrderableItem[] = [
+        { id: 'A', order: 100 },
+        { id: 'B', order: 100.4 }, // Gap of 0.4
+        { id: 'C', order: 200 },
+      ];
+
+      // Move C between A and B - midpoint would be (100 + 100.4) / 2 = 100.2
+      // With default minOrderGap (0.1), gap of 0.2 to A and 0.2 to B is fine
+      const resultDefault = reorderItems(items, 'C', 1);
+      expect(resultDefault.changes).toHaveLength(1); // Only C changes
+      expect(resultDefault.changes[0]!.order).toBe(100.2);
+
+      // With custom minOrderGap (0.3), gap of 0.2 is too small, should trigger renumbering
+      const resultCustom = reorderItems(items, 'C', 1, { 
+        minOrderGap: 0.3,
+        renumberGap: 50 
+      });
+      
+      expect(resultCustom.changes).toHaveLength(3); // All items change due to renumbering
+      expect(resultCustom.changes).toEqual([
+        { id: 'A', order: 50 },   // First position: 1 * 50
+        { id: 'C', order: 100 },  // Second position: 2 * 50
+        { id: 'B', order: 150 },  // Third position: 3 * 50
+      ]);
+    });
+  });
+
+  describe('Combined custom options', () => {
+    it('should work with all custom options together', () => {
+      const items: OrderableItem[] = [
+        { id: 'A', order: 3 }, // Below custom minimum of 5
+        { id: 'B', order: 8 },
+      ];
+
+      const result = reorderItems(items, 'B', 0, {
+        minOrderValue: 5,    // Items must be >= 5
+        renumberGap: 15,     // Use gaps of 15 when renumbering  
+        minOrderGap: 2.0     // Require gaps of at least 2.0
+      });
+
+      // Should trigger renumbering due to A having order 3 < 5
+      expect(result.changes).toEqual([
+        { id: 'B', order: 15 }, // First position: 1 * 15
+        { id: 'A', order: 30 }, // Second position: 2 * 15
+      ]);
+
+      // Verify all orders meet minimum
+      expect(result.orderedItems.every(item => item.order! >= 5)).toBe(true);
+    });
+  });
+
+  describe('Backward compatibility', () => {
+    it('should work exactly like before when no options are provided', () => {
+      const items: OrderableItem[] = [
+        { id: 'A', order: 100 },
+        { id: 'B', order: 200 },
+        { id: 'C', order: 300 },
+      ];
+
+      const result = reorderItems(items, 'C', 0);
+
+      // Should behave exactly as before: C gets order 99
+      expect(result.changes).toEqual([
+        { id: 'C', order: 99 },
+      ]);
+
+      expect(result.orderedItems).toEqual([
+        { id: 'C', order: 99 },
+        { id: 'A', order: 100 },
+        { id: 'B', order: 200 },
+      ]);
+    });
   });
 });

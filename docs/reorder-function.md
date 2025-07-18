@@ -20,7 +20,8 @@ The pure reorder function provides a robust, side-effect-free solution for reord
 function reorderItems(
   items: OrderableItem[],
   moveId: string,
-  targetIndex: number
+  targetIndex: number,
+  options?: ReorderOptions
 ): ReorderResult
 ```
 
@@ -30,6 +31,15 @@ function reorderItems(
 interface OrderableItem {
   id: string;
   order?: number;
+}
+
+interface ReorderOptions {
+  /** Minimum gap required between adjacent order values to avoid renumbering (default: 0.1) */
+  minOrderGap?: number;
+  /** Gap between items when renumbering all items (default: 10) */
+  renumberGap?: number;
+  /** Minimum allowed order value (default: 1) */
+  minOrderValue?: number;
 }
 
 interface ReorderResult {
